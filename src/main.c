@@ -3,21 +3,22 @@
 #include <time.h>
 
 #include "raylib.h"
-#define MIN_WIN_HEIGHT 1920
-#define MIN_WIN_WIDTH 1080
+#define MIN_WIN_HEIGHT GetMonitorHeight(0)
+#define MIN_WIN_WIDTH GetMonitorWidth(0)
 
-#define MAX_BODIES 1 << 4
+#define MAX_BODIES 3
 #define degToRad(angleInDegrees) ((angleInDegrees) * PI / 180.0)
 #define radToDeg(angleInRadians) ((angleInRadians) * 180.0 / PI)
 
 #define arrSize(array) ((sizeof(array) / sizeof((array)[0])))
 
-typedef struct CIRCLE {
+typedef struct BODY {
     Vector2 pos;
     Vector2 originPos;
     Color color;
-    float radius;
-} Circle;
+    float orbitRadius;
+} Body;
+;
 
 int main() {
     SetRandomSeed(time(NULL));
@@ -30,57 +31,39 @@ int main() {
         DARKBLUE,  PURPLE, VIOLET,   DARKPURPLE, BEIGE,     BROWN,   DARKBROWN,
         WHITE,     BLACK,  BLANK,    MAGENTA,    RAYWHITE};
 
-    int x, y;
-    int radius = 100;
     int angle = 0;
     int frameCounter = 0;
 
-    Circle circleArr[MAX_BODIES];
+    Body bodyArr[MAX_BODIES];
     for (int i = 0; i < MAX_BODIES; i++) {
-        circleArr[i].radius = GetRandomValue(50, 250);
-        circleArr[i].color = colorArr[GetRandomValue(0, arrSize(colorArr))];
-        circleArr[i].originPos.x =
-            GetRandomValue(circleArr[i].radius * 2,
-                           GetScreenHeight() - circleArr[i].radius * 2);
-        circleArr[i].originPos.y =
-            GetRandomValue(circleArr[i].radius * 2,
-                           GetScreenWidth() - circleArr[i].radius * 2);
+        bodyArr[i].orbitRadius = GetRandomValue(50, 100);
+        bodyArr[i].color = colorArr[GetRandomValue(0, arrSize(colorArr))];
+        bodyArr[i].originPos.x =
+            GetRandomValue(bodyArr[i].orbitRadius * 2,
+                           GetScreenWidth() - bodyArr[i].orbitRadius * 2);
+        bodyArr[i].originPos.y =
+            GetRandomValue(bodyArr[i].orbitRadius * 2,
+                           GetScreenHeight() - bodyArr[i].orbitRadius * 2);
     }
 
     while (!WindowShouldClose()) {
-        x = 40 + cos(degToRad(angle)) * (radius + 20);
-        y = 40 + sin(degToRad(angle)) * (radius);
-
         for (int i = 0; i < MAX_BODIES; i++) {
-            circleArr[i].pos.y = circleArr[i].originPos.x +
-                                 sin(degToRad(angle)) * circleArr[i].radius;
-            circleArr[i].pos.x = circleArr[i].originPos.y +
-                                 cos(degToRad(angle)) * circleArr[i].radius;
+            bodyArr[i].pos.y = bodyArr[i].originPos.y-2.5 +
+                               sin(degToRad(angle)) * bodyArr[i].orbitRadius;
+            bodyArr[i].pos.x = bodyArr[i].originPos.x -2.5 +
+                               cos(degToRad(angle)) * bodyArr[i].orbitRadius;
         }
 
-        // frameCounter++;
-        //  if (frameCounter > 2) {
-        //      frameCounter = 0;
-
-        // }
-        angle += 2.0f;
+        angle = angle > 360 ? 0 : angle + 1.0f;
 
         BeginDrawing();
-        ClearBackground(BLACK);
-        // DrawText("N Body", GetScreenWidth() / 2, GetScreenHeight() / 2, 40,
-        // WHITE);
-        //  for (int i = 0; i < MAX_BODIES; i++) {
-        //      DrawCircle(x + GetRandomValue(GetScreenWidth() / 2,
-        //      GetScreenWidth() / 2 + 100),
-        //                 y + GetRandomValue(GetScreenHeight() / 2,
-        //                 GetScreenHeight() / 2 + 100), 5.0f,
-        //                 colorArr[GetRandomValue(0, 25)]);
-        //  }
-        //  DrawCircle(x + GetScreenWidth() / 2, y + GetScreenHeight() / 2, 05,
-        //  RED); DrawEllipseLines(40 + GetScreenWidth() / 2, 40 +
-        //  GetScreenHeight() / 2, radius + 20, radius, RED);
+        if (IsKeyDown(KEY_SPACE)) {
+            ClearBackground(WHITE);
+        } else
+            ClearBackground(BLACK);
+
         for (int i = 0; i < MAX_BODIES; i++) {
-            DrawCircleV(circleArr[i].pos, 5, circleArr[i].color);
+            DrawCircleV(bodyArr[i].pos, 5, bodyArr[i].color);
         }
 
         EndDrawing();
