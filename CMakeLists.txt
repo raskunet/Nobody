@@ -28,7 +28,7 @@ elseif(APPLE)
     set(SYSTEM_LIBS ${COCOA_LIBRARY} ${IOKIT_LIBRARY} ${COREVIDEO_LIBRARY} "-framework OpenGL" "-framework CoreFoundation" ${SDL2_LIBRARIES})
 elseif(UNIX)
     # Linux specific settings
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33")
+    set(CMAKE_C_FLAGS "-O2 ${CMAKE_C_FLAGS} -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33")
     set(RAYLIB_LIBS_PATH "${PROJECT_SOURCE_DIR}/external/raylib/src")
     set(RAYLIB_LIB "${RAYLIB_LIBS_PATH}/libraylib.a")
     find_package(PkgConfig REQUIRED)
@@ -45,6 +45,8 @@ include_directories(${PROJECT_SOURCE_DIR}/external/raylib/src)
 # Add source files
 add_executable(${EXECUTABLE_NAME}
     src/main.c
+    src/utils.c
+    src/vector.c
 )
 
 # Link libraries
