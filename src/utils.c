@@ -5,11 +5,11 @@
 
 #include "raylib.h"
 #include "vector.h"
-static double G_CONST = 0.05;
-static double dt = 1;  // Days in year
+static double G_CONST = 0.1;
+static double dt = 0.5;  // Days in year
 static double t_end = 365 * 10;
 static double t = 0;
-#define MAX_BODIES 1024
+#define MAX_BODIES 1200
 
 #define degToRad(angle_in_degrees) ((angleInDegrees) * PI / 180.0)
 #define radToDeg(angle_in_radians) ((angleInRadians) * 180.0 / PI)
@@ -19,6 +19,7 @@ static double t = 0;
 typedef struct BODY {
     Vector3 position;
     Vector3 velocity;
+    Vector3 acceleration;
     double mass;
     union SHAPE {
         Color color;
