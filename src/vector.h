@@ -1,9 +1,8 @@
-#include <math.h>
-#include <stdlib.h>
 
-#include "raylib.h"
 #ifndef VECTOR_H
 #define VECTOR_H
+
+#include "raylib.h"
 
 Vector3 add_vector(Vector3 a, Vector3 b);
 
@@ -17,4 +16,6 @@ double mag_vector(Vector3 vec);
 
 Vector3 rand_vec();
 
-#endif  // VECTOR_H
+double eucld_dist(Vector3 a, Vector3 b);
+
+#endif /* vector.h */
