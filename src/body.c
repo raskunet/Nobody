@@ -1,9 +1,13 @@
 #include "body.h"
+
 #include <float.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "raylib.h"
 #include "utils.c"
 #include "vector.h"
 
@@ -13,9 +17,9 @@ Body rand_body() {
     rand_b.velocity = rand_vec();
     rand_b.mass = (float)rand() / RAND_MAX;
     rand_b.shape.color = WHITE;
+    rand_b.prev_accel = (Vector3){0.0f, 0.0f, 0.0f};
     return rand_b;
 }
-
 
 Body* load_values_from_file(char* filename) {
     if (!FileExists(filename)) {
@@ -25,7 +29,6 @@ Body* load_values_from_file(char* filename) {
     char* fileDat = LoadFileText(filename);
     int* counter = MemAlloc(sizeof(int));
     const char** lines = TextSplit(fileDat, '\n', counter);
-
 
     char** alloc_lines = (char**)MemAlloc(*counter * sizeof(char*));
     for (int i = 0; i < *counter; i++) {
@@ -141,4 +144,47 @@ Body* init_cluster_bodies() {
         body_arr[i].velocity.z = 0.0;
     }
     return body_arr;
+}
+
+void compute_body_force(Body* body_t) {
+    double ESP2 = 1.0e-9f;
+
+    for (size_t i = 0; i < MAX_BODIES; i++) {
+        body_t[i].prev_accel = body_t[i].acceleration;
+        body_t[i].acceleration = (Vector3){0, 0, 0};
+
+        for (size_t j = 0; j < MAX_BODIES; j++) {
+            if (j != i) {
+                double mass = body_t[j].mass;
+                Vector3 dist =
+                    subtract_vector(body_t[j].position, body_t[i].position);
+
+                double mag_r = dist.x * dist.x + dist.y * dist.y + ESP2;
+
+                float distSixth = mag_r * mag_r * mag_r;
+
+                float invDistCube = 1.0f * (1 / sqrt(distSixth));
+
+                float f = mass * invDistCube;
+
+                body_t[i].acceleration.x += G_CONST * f * dist.x;
+                body_t[i].acceleration.y += G_CONST * f * dist.y;
+            }
+        }
+    }
+}
+
+void update_body_positon(Body* body_t) {
+    float dt_half = dt * 0.5f;
+
+    body_t->velocity =
+        add_vector(body_t->velocity, scale_vector(dt_half, body_t->prev_accel));
+
+    body_t->position =
+        add_vector(body_t->position, scale_vector(dt, body_t->velocity));
+
+    body_t->velocity = add_vector(body_t->velocity,
+                                  scale_vector(dt_half, body_t->acceleration));
+    TraceLog(LOG_INFO, "Position is x=%f,y=%f,z=%f", body_t->position.x,
+             body_t->position.y, body_t->position.z);
 }

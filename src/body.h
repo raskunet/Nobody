@@ -9,6 +9,7 @@ typedef struct BODY {
     Vector3 position;
     Vector3 velocity;
     Vector3 acceleration;
+    Vector3 prev_accel;
     double mass;
     union SHAPE {
         Color color;
@@ -24,8 +25,8 @@ Body* body_init();
 
 Body* init_cluster_bodies();
 
-void update_body_positon(Body*);
+void compute_body_force(Body*);
 
-void compute_body_force(Body*, Body*);
+void update_body_positon(Body*);
 
 #endif /* body.h */
