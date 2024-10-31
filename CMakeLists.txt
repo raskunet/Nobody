@@ -47,6 +47,7 @@ add_executable(${EXECUTABLE_NAME}
     src/main.c
     src/utils.c
     src/vector.c
+    src/body.c
 )
 
 # Link libraries
