@@ -3,7 +3,7 @@
 
 #include "raylib.h"
 
-#define MAX_BODIES 2
+#define MAX_BODIES 1200
 
 typedef struct BODY {
     Vector3 position;
@@ -28,5 +28,7 @@ Body* init_cluster_bodies();
 void compute_body_force(Body*);
 
 void update_body_positon(Body*);
+
+void update_body_velocity(Body*);
 
 #endif /* body.h */

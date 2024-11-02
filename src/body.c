@@ -50,6 +50,9 @@ Body* load_values_from_file(char* filename) {
             body[i].velocity.y = strtod(line[4], NULL);
             body[i].velocity.z = strtod(line[5], NULL);
 
+            body[i].acceleration = (Vector3){0, 0, 0};
+            body[i].prev_accel = (Vector3){0, 0, 0};
+
             body[i].mass = strtod(line[6], NULL);
             body[i].shape.color = YELLOW;
         }
@@ -107,7 +110,7 @@ Body* init_cluster_bodies() {
     srand(time(NULL));
     Body* body_arr = (Body*)MemAlloc(MAX_BODIES * sizeof(Body));
     // set origin
-    body_arr[0].mass = 10;
+    body_arr[0].mass = 1e8;
     body_arr[0].position = (Vector3){0, 0, 0};
     body_arr[0].velocity = (Vector3){
         0,
@@ -124,7 +127,7 @@ Body* init_cluster_bodies() {
         body_arr[i].shape.color = ORANGE;
     }
     for (int i = 1; i < MAX_BODIES; i++) {
-        double r = 1000 * sqrt((rand()) / (float)RAND_MAX);
+        double r = 100000 * sqrt((rand()) / (float)RAND_MAX);
         double theta = (rand() / (double)RAND_MAX) * 2 * PI;
 
         body_arr[i].position.x = cos(theta) * r;
@@ -135,19 +138,20 @@ Body* init_cluster_bodies() {
             4;
         theta += M_PI / 2 + (rand() / (double)RAND_MAX - 0.5) * M_PI / 2;
 
-        // body_arr[i].velocity.x = cos(theta) * r;
-        // body_arr[i].velocity.y = cos(theta) * r;
-        // body_arr[i].velocity.z = 0.0;
-        //(rand() / (float)RAND_MAX - 0.5) * 10000.0;)
-        body_arr[i].velocity.x = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
-        body_arr[i].velocity.y = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
+        body_arr[i].velocity.x = cos(theta) * r;
+        body_arr[i].velocity.y = cos(theta) * r;
         body_arr[i].velocity.z = 0.0;
+        
+        //(rand() / (float)RAND_MAX - 0.5) * 10000.0;)
+        // body_arr[i].velocity.x = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
+        // body_arr[i].velocity.y = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
+        // body_arr[i].velocity.z = 0.0;
     }
     return body_arr;
 }
 
 void compute_body_force(Body* body_t) {
-    double ESP2 = 1.0e-9f;
+    double ESP2 = 1.0e-2f;
 
     for (size_t i = 0; i < MAX_BODIES; i++) {
         body_t[i].prev_accel = body_t[i].acceleration;
@@ -176,15 +180,15 @@ void compute_body_force(Body* body_t) {
 
 void update_body_positon(Body* body_t) {
     float dt_half = dt * 0.5f;
+    body_t->position = add_vector(
+        body_t->position,
+        add_vector(scale_vector(dt, body_t->velocity),
+                   scale_vector(((dt * dt) * 0.5f), body_t->acceleration)));
+}
 
-    body_t->velocity =
-        add_vector(body_t->velocity, scale_vector(dt_half, body_t->prev_accel));
-
-    body_t->position =
-        add_vector(body_t->position, scale_vector(dt, body_t->velocity));
-
-    body_t->velocity = add_vector(body_t->velocity,
-                                  scale_vector(dt_half, body_t->acceleration));
-    TraceLog(LOG_INFO, "Position is x=%f,y=%f,z=%f", body_t->position.x,
-             body_t->position.y, body_t->position.z);
+void update_body_velocity(Body* body_t) {
+    body_t->velocity = add_vector(
+        body_t->velocity,
+        scale_vector(dt * 0.5f,
+                     add_vector(body_t->acceleration, body_t->prev_accel)));
 }

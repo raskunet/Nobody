@@ -9,7 +9,7 @@
 #define MIN_WIN_HEIGHT 1920
 #define MIN_WIN_WIDTH 1080
 
-double zoom_factor = 1.0f;
+double zoom_factor = 1.0e-1f;
 Vector2 map_cartesian_screen(Vector2 coords) {
     Vector2 screen_coords = {0};
     screen_coords.x = zoom_factor * coords.x + (float)GetScreenWidth() / 2;
@@ -32,17 +32,22 @@ int main() {
     int angle = 0;
     int frame_counter = 0;
 
-    Body* body_arr = load_values_from_file("../src/planet.dat");
-    // Body* body_arr = body_init();
-    // Body* body_arr = init_cluster_bodies();
+    // Body* body_arr = load_values_from_file("../src/planet.dat");
+    //Body* body_arr = body_init();
+    Body* body_arr = init_cluster_bodies();
     if (body_arr == NULL) {
         return -1;
     }
 
     while (!WindowShouldClose()) {
-        compute_body_force(body_arr);
         for (size_t i = 0; i < MAX_BODIES; i++) {
             update_body_positon(&body_arr[i]);
+        }
+
+        compute_body_force(body_arr);
+
+        for (size_t i = 0; i < MAX_BODIES; i++) {
+            update_body_velocity(&body_arr[i]);
         }
 
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
@@ -61,15 +66,15 @@ int main() {
         if (camera.zoom < 0.1f) camera.zoom = 0.1f;
 
         BeginDrawing();
-        // ClearBackground(BLACK);
-        //  BeginMode2D(camera);
+        ClearBackground(BLACK);
+        BeginMode2D(camera);
         DrawFPS(5, 5);
         for (size_t i = 0; i < MAX_BODIES; i++) {
             Vector2 mapCorrd = map_cartesian_screen((Vector2){
                 .x = body_arr[i].position.x, .y = body_arr[i].position.y});
-            DrawCircleV(mapCorrd, 2, Fade(body_arr[i].shape.color, 0.3));
+            DrawCircleV(mapCorrd, i == 0 ? 10 : 5, body_arr[i].shape.color);
         }
-        // EndMode2D();
+        EndMode2D();
         EndDrawing();
     }
     free(body_arr);
