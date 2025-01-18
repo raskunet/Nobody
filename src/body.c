@@ -119,15 +119,15 @@ Body* init_cluster_bodies() {
     };
     body_arr[0].shape.color = YELLOW;
 
-    float nominal_mass = 0.1;
+    float nominal_mass = 1;
     double total_mass = body_arr[0].mass;
     for (int i = 1; i < MAX_BODIES; i++) {
         body_arr[i].mass = (rand() / (float)RAND_MAX) * nominal_mass;
         total_mass += body_arr[i].mass;
-        body_arr[i].shape.color = ORANGE;
+        body_arr[i].shape.color = WHITE;
     }
     for (int i = 1; i < MAX_BODIES; i++) {
-        double r = 100000 * sqrt((rand()) / (float)RAND_MAX);
+        double r = 10000 * sqrt((rand()) / (float)RAND_MAX);
         double theta = (rand() / (double)RAND_MAX) * 2 * PI;
 
         body_arr[i].position.x = cos(theta) * r;
@@ -139,7 +139,7 @@ Body* init_cluster_bodies() {
         theta += M_PI / 2 + (rand() / (double)RAND_MAX - 0.5) * M_PI / 2;
 
         body_arr[i].velocity.x = cos(theta) * r;
-        body_arr[i].velocity.y = cos(theta) * r;
+        body_arr[i].velocity.y = sin(theta) * r;
         body_arr[i].velocity.z = 0.0;
         
         //(rand() / (float)RAND_MAX - 0.5) * 10000.0;)

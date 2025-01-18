@@ -6,8 +6,8 @@
 #include "raylib.h"
 #include "utils.c"
 
-#define MIN_WIN_HEIGHT 1920
-#define MIN_WIN_WIDTH 1080
+#define WIN_HEIGHT 800
+#define WIN_WIDTH 600
 
 double zoom_factor = 1.0e-1f;
 Vector2 map_cartesian_screen(Vector2 coords) {
@@ -19,13 +19,13 @@ Vector2 map_cartesian_screen(Vector2 coords) {
 
 int main() {
     SetRandomSeed(time(NULL));
-    InitWindow(MIN_WIN_HEIGHT, MIN_WIN_WIDTH, "N Body Simulation");
+    InitWindow(WIN_HEIGHT, WIN_WIDTH, "N Body Simulation");
     SetTargetFPS(60);
     Camera2D camera = {0};
-    camera.offset =
-        (Vector2){GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
     camera.rotation = 0.0f;
-    camera.zoom = 0.7f;
+    camera.zoom = 0.3f;
+    camera.offset = 
+        (Vector2){GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 
     Vector2 temp_cam;
     int mouse_down = 0;
@@ -33,7 +33,7 @@ int main() {
     int frame_counter = 0;
 
     // Body* body_arr = load_values_from_file("../src/planet.dat");
-    //Body* body_arr = body_init();
+    // Body* body_arr = body_init();
     Body* body_arr = init_cluster_bodies();
     if (body_arr == NULL) {
         return -1;
@@ -68,7 +68,8 @@ int main() {
         BeginDrawing();
         ClearBackground(BLACK);
         BeginMode2D(camera);
-        DrawFPS(5, 5);
+        Vector2 fpsPos = GetScreenToWorld2D((Vector2){5, 5}, camera);
+        DrawFPS(fpsPos.x, fpsPos.y);
         for (size_t i = 0; i < MAX_BODIES; i++) {
             Vector2 mapCorrd = map_cartesian_screen((Vector2){
                 .x = body_arr[i].position.x, .y = body_arr[i].position.y});
