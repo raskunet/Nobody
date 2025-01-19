@@ -6,8 +6,8 @@
 #include "raylib.h"
 #include "utils.c"
 
-#define WIN_HEIGHT 800
-#define WIN_WIDTH 600
+#define WIN_HEIGHT 1280
+#define WIN_WIDTH 720
 
 double zoom_factor = 1.0e-1f;
 Vector2 map_cartesian_screen(Vector2 coords) {
@@ -33,7 +33,7 @@ int main() {
     int frame_counter = 0;
 
     // Body* body_arr = load_values_from_file("../src/planet.dat");
-    // Body* body_arr = body_init();
+    //Body* body_arr = body_init();
     Body* body_arr = init_cluster_bodies();
     if (body_arr == NULL) {
         return -1;

@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 
+
 #define MAX_BODIES 1200
 
 typedef struct BODY {
@@ -31,4 +32,5 @@ void update_body_positon(Body*);
 
 void update_body_velocity(Body*);
 
+Body *add(Body* A,Body *B);
 #endif /* body.h */

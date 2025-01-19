@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(HacktoberChallenge C)
+project("N body Simulation" C)
 
 # Specify the C standard
 set(CMAKE_C_STANDARD 99)
@@ -48,6 +48,7 @@ add_executable(${EXECUTABLE_NAME}
     src/utils.c
     src/vector.c
     src/body.c
+    src/tree.c
 )
 
 # Link libraries

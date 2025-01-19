@@ -2,7 +2,6 @@
 
 #include <float.h>
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -141,7 +140,7 @@ Body* init_cluster_bodies() {
         body_arr[i].velocity.x = cos(theta) * r;
         body_arr[i].velocity.y = sin(theta) * r;
         body_arr[i].velocity.z = 0.0;
-        
+
         //(rand() / (float)RAND_MAX - 0.5) * 10000.0;)
         // body_arr[i].velocity.x = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
         // body_arr[i].velocity.y = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
@@ -191,4 +190,23 @@ void update_body_velocity(Body* body_t) {
         body_t->velocity,
         scale_vector(dt * 0.5f,
                      add_vector(body_t->acceleration, body_t->prev_accel)));
+}
+
+Body* add(Body* A, Body* B) {
+    /*
+        m = m1 + m2
+        x = ( x1m1 + x2m2 ) / m
+        y = ( y1m1 + y2m2 ) / m
+    */
+    Body* acumBody = (Body*)MemAlloc(sizeof(Body));
+    acumBody->mass = A->mass + B->mass;
+
+    acumBody->position.x =
+        (A->position.x * A->mass + B->position.x * B->mass) / acumBody->mass;
+
+    acumBody->position.x =
+        (A->position.y * A->mass + B->position.y * B->mass) / acumBody->mass;
+    
+    MemFree(A);
+    return acumBody;
 }
