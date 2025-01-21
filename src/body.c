@@ -14,7 +14,7 @@ Body rand_body() {
     Body rand_b;
     rand_b.position = rand_vec();
     rand_b.velocity = rand_vec();
-    rand_b.mass = (float)rand() / RAND_MAX;
+    rand_b.mass = (float)rand() / RAND_MAX + 0.3;
     rand_b.shape.color = WHITE;
     rand_b.prev_accel = (Vector3){0.0f, 0.0f, 0.0f};
     return rand_b;
@@ -109,7 +109,7 @@ Body* init_cluster_bodies() {
     srand(time(NULL));
     Body* body_arr = (Body*)MemAlloc(MAX_BODIES * sizeof(Body));
     // set origin
-    body_arr[0].mass = 1e8;
+    body_arr[0].mass = 1e10;
     body_arr[0].position = (Vector3){0, 0, 0};
     body_arr[0].velocity = (Vector3){
         0,
@@ -118,7 +118,7 @@ Body* init_cluster_bodies() {
     };
     body_arr[0].shape.color = YELLOW;
 
-    float nominal_mass = 1;
+    float nominal_mass = 10;
     double total_mass = body_arr[0].mass;
     for (int i = 1; i < MAX_BODIES; i++) {
         body_arr[i].mass = (rand() / (float)RAND_MAX) * nominal_mass;
@@ -150,30 +150,34 @@ Body* init_cluster_bodies() {
 }
 
 void compute_body_force(Body* body_t) {
-    double ESP2 = 1.0e-2f;
-
     for (size_t i = 0; i < MAX_BODIES; i++) {
         body_t[i].prev_accel = body_t[i].acceleration;
         body_t[i].acceleration = (Vector3){0, 0, 0};
 
         for (size_t j = 0; j < MAX_BODIES; j++) {
             if (j != i) {
-                double mass = body_t[j].mass;
-                Vector3 dist =
-                    subtract_vector(body_t[j].position, body_t[i].position);
-
-                double mag_r = dist.x * dist.x + dist.y * dist.y + ESP2;
-
-                float distSixth = mag_r * mag_r * mag_r;
-
-                float invDistCube = 1.0f * (1 / sqrt(distSixth));
-
-                float f = mass * invDistCube;
-
-                body_t[i].acceleration.x += G_CONST * f * dist.x;
-                body_t[i].acceleration.y += G_CONST * f * dist.y;
+                calculate_net_force(&body_t[i], &body_t[j]);
             }
         }
+    }
+}
+
+void calculate_net_force(Body* A, Body* B) {
+    if (!(A == NULL || B == NULL)) {
+        double ESP2 = 1.0e-2f;
+        double mass = B->mass;
+        Vector3 dist = subtract_vector(B->position, A->position);
+
+        double mag_r = dist.x * dist.x + dist.y * dist.y + ESP2;
+
+        float distSixth = mag_r * mag_r * mag_r;
+
+        float invDistCube = 1.0f * (1 / sqrt(distSixth));
+
+        float f = mass * invDistCube;
+
+        A->acceleration.x += G_CONST * f * dist.x;
+        A->acceleration.y += G_CONST * f * dist.y;
     }
 }
 
@@ -198,15 +202,25 @@ Body* add(Body* A, Body* B) {
         x = ( x1m1 + x2m2 ) / m
         y = ( y1m1 + y2m2 ) / m
     */
-    Body* acumBody = (Body*)MemAlloc(sizeof(Body));
-    acumBody->mass = A->mass + B->mass;
+    // Body* acumBody = (Body*)MemAlloc(sizeof(Body));
+    // acumBody->mass = A->mass + B->mass;
 
-    acumBody->position.x =
-        (A->position.x * A->mass + B->position.x * B->mass) / acumBody->mass;
+    // acumBody->position.x =
+    //     (A->position.x * A->mass + B->position.x * B->mass) / acumBody->mass;
 
-    acumBody->position.x =
-        (A->position.y * A->mass + B->position.y * B->mass) / acumBody->mass;
-    
-    MemFree(A);
-    return acumBody;
+    // acumBody->position.x =
+    //     (A->position.y * A->mass + B->position.y * B->mass) / acumBody->mass;
+
+    // Body* acumBody = (Body*)MemAlloc(sizeof(Body));
+    if (!(A == NULL || B == NULL)) {
+        A->mass = A->mass + B->mass;
+
+        A->position.x =
+            (A->position.x * A->mass + B->position.x * B->mass) / A->mass;
+
+        A->position.y =
+            (A->position.y * A->mass + B->position.y * B->mass) / A->mass;
+        return A;
+    }
+    return A;
 }

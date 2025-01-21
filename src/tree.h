@@ -31,11 +31,14 @@ typedef enum {
 // typedef struct QUADTREE Quadtree;
 struct Quadtree {
     BoundingBox AABB;
+    Vector3 centre_of_mass;
+    double com_mass;
     Body* body;
     struct Quadtree* nw;
     struct Quadtree* ne;
     struct Quadtree* se;
     struct Quadtree* sw;
+    unsigned int index;
 };
 
 bool BoxContainsPoint(BoundingBox, float, float);
@@ -43,8 +46,12 @@ float BoundingBoxLength(BoundingBox);
 BoundingBox returnSubQuad(BoundingBox, QuadType);
 // bool checkBodyInQuad(BoundingBox ,QuadType);
 struct Quadtree * createTree(BoundingBox );
-bool insertBody(struct Quadtree*, Body*);
+bool insertBody(struct Quadtree*, Body*,int);
 void QuadSubDivide(struct Quadtree* );
 void deleteTree(struct Quadtree*);
+void updateForce(struct Quadtree*,Body*,int);
+void updateMass(struct Quadtree*);
+void DebugQuadTree(struct Quadtree*);
+int getTreeSize(struct Quadtree*);
 
 #endif /* tree.h */

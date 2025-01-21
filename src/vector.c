@@ -29,7 +29,7 @@ double mag_vector(Vector3 vec) {
 }
 
 Vector3 rand_vec() {
-    Vector3 rand_v = {(float)rand() / RAND_MAX, (float)rand() / RAND_MAX};
+    Vector3 rand_v = {(float)rand() / RAND_MAX + 0.3, (float)rand() / RAND_MAX + 0.3};
     return rand_v;
 }
 
