@@ -1,5 +1,6 @@
 #include "tree.h"
 
+#include <bits/stdint-intn.h>
 #include <math.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -70,6 +71,9 @@ void QuadSubDivide(struct Quadtree* qTree) {
     group of bodies beneath them.
 */
 bool insertBody(struct Quadtree* qTree, Body* body, int index) {
+    /*
+        TODO: Add recursion limit
+    */
     if (!BoxContainsPoint(qTree->AABB, body->position.x, body->position.y)) {
         return false;
     }

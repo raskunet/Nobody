@@ -31,14 +31,15 @@ typedef enum {
 // typedef struct QUADTREE Quadtree;
 struct Quadtree {
     BoundingBox AABB;
-    Vector3 centre_of_mass;
-    double com_mass;
+    float com_mass;
+    short index;
     Body* body;
+    Vector3 centre_of_mass;
+    
     struct Quadtree* nw;
     struct Quadtree* ne;
     struct Quadtree* se;
     struct Quadtree* sw;
-    unsigned int index;
 };
 
 bool BoxContainsPoint(BoundingBox, float, float);

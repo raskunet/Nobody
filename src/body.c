@@ -15,7 +15,7 @@ Body rand_body() {
     rand_b.position = rand_vec();
     rand_b.velocity = rand_vec();
     rand_b.mass = (float)rand() / RAND_MAX + 0.3;
-    rand_b.shape.color = WHITE;
+    rand_b.color = WHITE;
     rand_b.prev_accel = (Vector3){0.0f, 0.0f, 0.0f};
     return rand_b;
 }
@@ -53,7 +53,7 @@ Body* load_values_from_file(char* filename) {
             body[i].prev_accel = (Vector3){0, 0, 0};
 
             body[i].mass = strtod(line[6], NULL);
-            body[i].shape.color = YELLOW;
+            body[i].color = YELLOW;
         }
         MemFree(count);
     }
@@ -116,17 +116,17 @@ Body* init_cluster_bodies() {
         0,
         0,
     };
-    body_arr[0].shape.color = YELLOW;
+    body_arr[0].color = YELLOW;
 
-    float nominal_mass = 10;
+    float nominal_mass = 1;
     double total_mass = body_arr[0].mass;
     for (int i = 1; i < MAX_BODIES; i++) {
         body_arr[i].mass = (rand() / (float)RAND_MAX) * nominal_mass;
         total_mass += body_arr[i].mass;
-        body_arr[i].shape.color = WHITE;
+        body_arr[i].color = WHITE;
     }
     for (int i = 1; i < MAX_BODIES; i++) {
-        double r = 10000 * sqrt((rand()) / (float)RAND_MAX);
+        double r = 6000 * sqrt((rand()) / (float)RAND_MAX);
         double theta = (rand() / (double)RAND_MAX) * 2 * PI;
 
         body_arr[i].position.x = cos(theta) * r;
@@ -149,6 +149,91 @@ Body* init_cluster_bodies() {
     return body_arr;
 }
 
+Body* init_colliding_galaxies() {
+    srand(time(NULL));
+    Body* body_arr = (Body*)MemAlloc(MAX_BODIES * sizeof(Body));
+    // set origin
+    Vector3 black_hole_1 = {0, 0, 0};
+    Vector3 black_hole_2 = {-2000, 1000, 0};
+
+    body_arr[0].mass = 9e9;
+    body_arr[0].position = black_hole_1;
+    body_arr[0].velocity = (Vector3){
+        -1,
+        0,
+        0,
+    };
+    body_arr[0].color = YELLOW;
+
+    body_arr[1].mass = 5e8;
+    body_arr[1].position = black_hole_2;
+    body_arr[1].velocity = (Vector3){
+        5,
+        -30,
+        0,
+    };
+    body_arr[1].color = YELLOW;
+
+
+    // For Galaxy 1
+    float nominal_mass = 10;
+    unsigned int count = 0;
+    double total_mass = body_arr[0].mass;
+    for (int i = 2; i < MAX_BODIES / 2; i++) {
+        body_arr[i].mass = (rand() / (float)RAND_MAX) * nominal_mass;
+        total_mass += body_arr[i].mass;
+        body_arr[i].color = WHITE;
+        count++;
+    }
+    for (int i = 2; i < count; i++) {
+        double r = 1000 * sqrt((rand()) / (float)RAND_MAX);
+        double theta = (rand() / (double)RAND_MAX) * 2 * PI;
+
+        body_arr[i].position.x = cos(theta) * r + black_hole_1.x;
+        body_arr[i].position.y = sin(theta) * r + black_hole_1.y;
+        body_arr[i].position.z = 0.0;
+
+        r = sqrtf(G_CONST * total_mass / r) * (rand() / (double)RAND_MAX + 3) /
+            4;
+        theta += M_PI / 2 + (rand() / (double)RAND_MAX - 0.5) * M_PI / 2;
+
+        body_arr[i].velocity.x = cos(theta) * r;
+        body_arr[i].velocity.y = sin(theta) * r;
+        body_arr[i].velocity.z = 0.0;
+
+        //(rand() / (float)RAND_MAX - 0.5) * 10000.0;)
+        // body_arr[i].velocity.x = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
+        // body_arr[i].velocity.y = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
+        // body_arr[i].velocity.z = 0.0;
+    }
+
+
+    // For Galaxy_2
+    nominal_mass = 1;
+    total_mass = body_arr[1].mass;
+    for (int i = count; i < MAX_BODIES; i++) {
+        body_arr[i].mass = (rand() / (float)RAND_MAX) * nominal_mass;
+        total_mass += body_arr[i].mass;
+        body_arr[i].color = WHITE;
+    }
+    for (size_t i = count; i < MAX_BODIES; i++) {
+        double r = 700 * sqrt((rand()) / (float)RAND_MAX);
+        double theta = (rand() / (double)RAND_MAX) * 2 * PI;
+
+        body_arr[i].position.x = -cos(theta) * r + black_hole_2.x;
+        body_arr[i].position.y = -sin(theta) * r + black_hole_2.y;
+        body_arr[i].position.z = 0.0;
+
+        r = sqrtf(G_CONST * total_mass / r) * (rand() / (double)RAND_MAX + 3) /
+            4;
+        theta += M_PI / 2 + (rand() / (double)RAND_MAX - 0.5) * M_PI / 2;
+
+        body_arr[i].velocity.x = cos(theta) * r;
+        body_arr[i].velocity.y = sin(theta) * r;
+        body_arr[i].velocity.z = 0.0;
+    }
+    return body_arr;
+}
 void compute_body_force(Body* body_t) {
     for (size_t i = 0; i < MAX_BODIES; i++) {
         body_t[i].prev_accel = body_t[i].acceleration;
@@ -169,6 +254,11 @@ void calculate_net_force(Body* A, Body* B) {
         Vector3 dist = subtract_vector(B->position, A->position);
 
         double mag_r = dist.x * dist.x + dist.y * dist.y + ESP2;
+        // if (mag_r > 1000000) {
+        //     mag_r = 1000000;
+        // } else if (mag_r < 10) {
+        //     mag_r = 10;
+        // }
 
         float distSixth = mag_r * mag_r * mag_r;
 
@@ -202,16 +292,6 @@ Body* add(Body* A, Body* B) {
         x = ( x1m1 + x2m2 ) / m
         y = ( y1m1 + y2m2 ) / m
     */
-    // Body* acumBody = (Body*)MemAlloc(sizeof(Body));
-    // acumBody->mass = A->mass + B->mass;
-
-    // acumBody->position.x =
-    //     (A->position.x * A->mass + B->position.x * B->mass) / acumBody->mass;
-
-    // acumBody->position.x =
-    //     (A->position.y * A->mass + B->position.y * B->mass) / acumBody->mass;
-
-    // Body* acumBody = (Body*)MemAlloc(sizeof(Body));
     if (!(A == NULL || B == NULL)) {
         A->mass = A->mass + B->mass;
 

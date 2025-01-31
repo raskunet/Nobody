@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Define executable name
-set(EXECUTABLE_NAME n-body)
+set(EXECUTABLE_NAME Nobody)
 
 # Set platform-specific options
 if(WIN32)
