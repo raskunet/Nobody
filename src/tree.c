@@ -70,10 +70,10 @@ void QuadSubDivide(struct Quadtree* qTree) {
     Internal Nodes will have atmost 4 childrens and represent information about
     group of bodies beneath them.
 */
-bool insertBody(struct Quadtree* qTree, Body* body, int index) {
-    /*
-        TODO: Add recursion limit
-    */
+bool insertBody(struct Quadtree* qTree, Body* body, int index, int depth) {
+    if (depth == 0) {
+        return false;
+    }
     if (!BoxContainsPoint(qTree->AABB, body->position.x, body->position.y)) {
         return false;
     }
@@ -92,8 +92,8 @@ bool insertBody(struct Quadtree* qTree, Body* body, int index) {
         QuadSubDivide(qTree);
         // qTree->body = add(qTree->body, body);
         // Body* old_body = qTree->body;
-        insertBody(qTree, qTree->body, qTree->index);
-        insertBody(qTree, body, index);
+        insertBody(qTree, qTree->body, qTree->index, depth);
+        insertBody(qTree, body, index, depth - 1);
         return true;
     }
 
@@ -102,10 +102,10 @@ bool insertBody(struct Quadtree* qTree, Body* body, int index) {
     // MemFree(qTree->body);
 
     // Now insert the point into the newly created Childrens.
-    if (insertBody(qTree->nw, body, index)) return true;
-    if (insertBody(qTree->ne, body, index)) return true;
-    if (insertBody(qTree->sw, body, index)) return true;
-    if (insertBody(qTree->se, body, index)) return true;
+    if (insertBody(qTree->nw, body, index, depth - 1)) return true;
+    if (insertBody(qTree->ne, body, index, depth - 1)) return true;
+    if (insertBody(qTree->sw, body, index, depth - 1)) return true;
+    if (insertBody(qTree->se, body, index, depth - 1)) return true;
 
     return false;
 }
@@ -174,7 +174,7 @@ void updateMass(struct Quadtree* qTree) {
             qTree->sw == NULL) {
             qTree->body = qTree->body;
             qTree->com_mass = qTree->body->mass;
-            qTree->centre_of_mass=qTree->body->position;
+            qTree->centre_of_mass = qTree->body->position;
             return;
         }
         // Now for internal Nodes calculcate by it's four children
@@ -206,7 +206,6 @@ void updateMass(struct Quadtree* qTree) {
             qTree->se->centre_of_mass.y * qTree->se->com_mass;
 
         qTree->centre_of_mass.y /= qTree->com_mass;
-        
     }
 }
 

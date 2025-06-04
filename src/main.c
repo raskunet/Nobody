@@ -23,7 +23,7 @@ void update_bodies(Body* body_arr, struct Quadtree* qTree) {
         update_body_positon(&body_arr[i]);
     }
     for (size_t i = 0; i < MAX_BODIES; i++) {
-        insertBody(qTree, &body_arr[i], i);
+        insertBody(qTree, &body_arr[i], i, 50);
     }
 
     updateMass(qTree);
@@ -92,11 +92,14 @@ int main() {
         ClearBackground(BLACK);
         BeginMode2D(camera);
 
-        int treeSize = getTreeSize(qTree);
-        char str[128];
-        sprintf(str, "FPS: %d\n\n\n\n\n\nNodes : %d",GetFPS(), treeSize);
-        Vector2 sizePos = GetScreenToWorld2D((Vector2){0, 0}, camera);
-        DrawText(str, sizePos.x, sizePos.y, 40 + 11 * (1 / camera.zoom), GREEN);
+        /*
+            int treeSize = getTreeSize(qTree);
+            char str[128];
+            sprintf(str, "FPS: %d\n\n\n\n\n\nNodes : %d", GetFPS(), treeSize);
+            Vector2 sizePos = GetScreenToWorld2D((Vector2){0, 0}, camera);
+            DrawText(str, sizePos.x, sizePos.y, 40 + 11 * (1 / camera.zoom),
+           GREEN);
+        */
 
         for (size_t i = 0; i < MAX_BODIES; i++) {
             // Vector2 mapCorrd = map_cartesian_screen((Vector2){

@@ -163,16 +163,16 @@ Body* init_colliding_galaxies() {
         0,
         0,
     };
-    body_arr[0].color = YELLOW;
+    body_arr[0].color = WHITE;
 
-    body_arr[1].mass = 5e8;
+    body_arr[1].mass = 5e9;
     body_arr[1].position = black_hole_2;
     body_arr[1].velocity = (Vector3){
-        5,
-        -30,
+        10,
+        -60,
         0,
     };
-    body_arr[1].color = YELLOW;
+    body_arr[1].color = WHITE;
 
 
     // For Galaxy 1

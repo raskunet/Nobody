@@ -47,7 +47,7 @@ float BoundingBoxLength(BoundingBox);
 BoundingBox returnSubQuad(BoundingBox, QuadType);
 // bool checkBodyInQuad(BoundingBox ,QuadType);
 struct Quadtree * createTree(BoundingBox );
-bool insertBody(struct Quadtree*, Body*,int);
+bool insertBody(struct Quadtree*, Body*,int,int depth);
 void QuadSubDivide(struct Quadtree* );
 void deleteTree(struct Quadtree*);
 void updateForce(struct Quadtree*,Body*,int);
