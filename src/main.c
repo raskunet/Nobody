@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -10,6 +11,7 @@
 #define WIN_HEIGHT 1600
 #define WIN_WIDTH 800
 
+Vector2 bb_l = {-10000.0, -10000.0}, bb_r = {5000.0, 5000.0};
 double zoom_factor = 1.0;
 Vector2 map_cartesian_screen(Vector2 coords) {
     Vector2 screen_coords = {0};
@@ -22,18 +24,22 @@ void update_bodies(Body* body_arr, struct Quadtree* qTree) {
     for (size_t i = 0; i < MAX_BODIES; i++) {
         update_body_positon(&body_arr[i]);
     }
-    for (size_t i = 0; i < MAX_BODIES; i++) {
-        insertBody(qTree, &body_arr[i], i, 50);
-    }
 
+    for (size_t i = 0; i < MAX_BODIES; i++) {
+        insertBody(
+            qTree, (bb_l.x + bb_r.x) / 2.0, (bb_l.y + bb_r.y) / 2.0,
+            fabs(bb_l.x - bb_r.x),
+            (Vector2){.x = body_arr[i].position.x, body_arr[i].position.y},
+            body_arr[i].mass, i, 50);
+    }
     updateMass(qTree);
 
-    for (size_t i = 0; i < MAX_BODIES; i++) {
-        body_arr[i].prev_accel = body_arr[i].acceleration;
-        body_arr[i].acceleration = (Vector3){0, 0, 0};
-        updateForce(qTree, &body_arr[i], i);
-    }
-    // compute_body_force(body_arr);
+    // for (size_t i = 0; i < MAX_BODIES; i++) {
+    //     body_arr[i].prev_accel = body_arr[i].acceleration;
+    //     body_arr[i].acceleration = (Vector3){0, 0, 0};
+    //     updateForce(qTree, &body_arr[i], i, 0, fabsf(bb_l.x - bb_r.x));
+    // }
+    //compute_body_force(body_arr);
 
     for (size_t i = 0; i < MAX_BODIES; i++) {
         update_body_velocity(&body_arr[i]);
@@ -62,10 +68,7 @@ int main() {
         return -1;
     }
 
-    BoundingBox bb = {(Vector3){.x = -10000, .y = -10000},
-                      (Vector3){.x = 5000, .y = 5000}};
-
-    struct Quadtree* qTree = createTree(bb);
+    struct Quadtree* qTree = createTree();
 
     while (!WindowShouldClose()) {
         update_bodies(body_arr, qTree);
@@ -94,12 +97,14 @@ int main() {
 
         /*
             int treeSize = getTreeSize(qTree);
-            char str[128];
-            sprintf(str, "FPS: %d\n\n\n\n\n\nNodes : %d", GetFPS(), treeSize);
-            Vector2 sizePos = GetScreenToWorld2D((Vector2){0, 0}, camera);
-            DrawText(str, sizePos.x, sizePos.y, 40 + 11 * (1 / camera.zoom),
-           GREEN);
+
+
+
         */
+        char str[64];
+        sprintf(str, "FPS: %d", GetFPS());
+        Vector2 sizePos = GetScreenToWorld2D((Vector2){0, 0}, camera);
+        DrawText(str, sizePos.x, sizePos.y, 40 + 11 * (1 / camera.zoom), GREEN);
 
         for (size_t i = 0; i < MAX_BODIES; i++) {
             // Vector2 mapCorrd = map_cartesian_screen((Vector2){
@@ -112,13 +117,13 @@ int main() {
                 (i == 0 || i == 1) ? 50 : 5, body_arr[i].color);
         }
         if (show_tree) {
-            DebugQuadTree(qTree);
+            DebugQuadTree(qTree, -10000, -10000, fabsf(bb_l.x - bb_r.x));
         }
         EndMode2D();
         EndDrawing();
 
         deleteTree(qTree);
-        qTree = createTree(bb);
+        qTree = createTree();
     }
     free(body_arr);
     body_arr = NULL;

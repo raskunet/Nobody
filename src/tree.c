@@ -1,51 +1,52 @@
 #include "tree.h"
 
-#include <bits/stdint-intn.h>
 #include <math.h>
-#include <stddef.h>
 #include <stdio.h>
 
-#include "body.h"
 #include "raylib.h"
 #include "vector.h"
 
-bool BoxContainsPoint(BoundingBox bb, float x, float y) {
-    if (bb.min.x <= x && bb.max.x >= x && bb.min.y <= y && bb.max.y >= y)
-        return true;
+bool BoxContainsPoint(float cx, float cy, float length, float x, float y) {
+    float lx = cx - length / 2.0;
+    float ly = cy - length / 2.0;
+    float bx = cx + length / 2.0;
+    float by = cy + length / 2.0;
+
+    if (x >= lx && y >= ly && x <= bx && y <= by) return true;
+
     return false;
 }
 
-float BoundingBoxLength(BoundingBox bb) { return fabs(bb.min.x - bb.max.x); }
-
-BoundingBox returnSubQuad(BoundingBox bb, QuadType quadT) {
-    BoundingBox subBB = {0, 0, 0, 0};
-    float bbLength = BoundingBoxLength(bb);
+Vector2 returnSubQuad(float length, float cx, float cy, QuadType quadT) {
+    Vector2 subBB;
+    float nx, ny;
     if (quadT & NORTH_WEST) {
-        subBB.min = bb.min;
-        subBB.max = (Vector3){bb.min.x + bbLength / 2, bb.min.y + bbLength / 2};
+        nx = cx - length / 2.0;
+        ny = cy - length / 2.0;
     }
     if (quadT & NORTH_EAST) {
-        subBB.min = (Vector3){bb.min.x, bb.min.y + bbLength / 2, 0};
-        subBB.max = (Vector3){bb.min.x + bbLength / 2, bb.max.y, 0};
-    }
-    if (quadT & SOUTH_EAST) {
-        subBB.min = (Vector3){bb.min.x + bbLength / 2, bb.min.y + bbLength / 2};
-        subBB.max = bb.max;
+        nx = cx - length / 2.0;
+        ny = cy + length / 2.0;
     }
     if (quadT & SOUTH_WEST) {
-        subBB.min = (Vector3){bb.min.x + bbLength / 2, bb.min.y};
-        subBB.max = (Vector3){bb.max.x, bb.min.y + bbLength / 2};
+        nx = cx + length / 2.0;
+        ny = cy - length / 2.0;
     }
+    if (quadT & SOUTH_EAST) {
+        nx = cx + length / 2.0;
+        ny = cy + length / 2.0;
+    }
+    subBB.x = (cx + nx) / 2.0;
+    subBB.y = (cy + ny) / 2.0;
     return subBB;
 }
 
-struct Quadtree* createTree(BoundingBox bb) {
+struct Quadtree* createTree() {
     struct Quadtree* qTree =
         (struct Quadtree*)MemAlloc(sizeof(struct Quadtree));
-    qTree->AABB = bb;
-    qTree->com_mass = 0;
-    qTree->centre_of_mass = (Vector3){0, 0, 0};
-    qTree->body = NULL;
+    qTree->mass = 0;
+    qTree->body_pos = (Vector2){0, 0};
+    qTree->index = -1;
     qTree->nw = NULL;
     qTree->ne = NULL;
     qTree->sw = NULL;
@@ -54,15 +55,15 @@ struct Quadtree* createTree(BoundingBox bb) {
 }
 
 void QuadSubDivide(struct Quadtree* qTree) {
-    qTree->nw = (struct Quadtree*)MemAlloc(sizeof(struct Quadtree));
-    qTree->ne = (struct Quadtree*)MemAlloc(sizeof(struct Quadtree));
-    qTree->sw = (struct Quadtree*)MemAlloc(sizeof(struct Quadtree));
-    qTree->se = (struct Quadtree*)MemAlloc(sizeof(struct Quadtree));
+    qTree->nw = createTree();
+    qTree->ne = createTree();
+    qTree->sw = createTree();
+    qTree->se = createTree();
 
-    qTree->nw->AABB = returnSubQuad(qTree->AABB, NORTH_WEST);
-    qTree->ne->AABB = returnSubQuad(qTree->AABB, NORTH_EAST);
-    qTree->sw->AABB = returnSubQuad(qTree->AABB, SOUTH_WEST);
-    qTree->se->AABB = returnSubQuad(qTree->AABB, SOUTH_EAST);
+    // qTree->nw->AABB = returnSubQuad(qTree->AABB, NORTH_WEST);
+    // qTree->ne->AABB = returnSubQuad(qTree->AABB, NORTH_EAST);
+    // qTree->sw->AABB = returnSubQuad(qTree->AABB, SOUTH_WEST);
+    // qTree->se->AABB = returnSubQuad(qTree->AABB, SOUTH_EAST);
 }
 
 /*
@@ -70,17 +71,19 @@ void QuadSubDivide(struct Quadtree* qTree) {
     Internal Nodes will have atmost 4 childrens and represent information about
     group of bodies beneath them.
 */
-bool insertBody(struct Quadtree* qTree, Body* body, int index, int depth) {
+bool insertBody(struct Quadtree* qTree, float c_x, float c_y, float length,
+                Vector2 position, float mass, int index, int depth) {
     if (depth == 0) {
         return false;
     }
-    if (!BoxContainsPoint(qTree->AABB, body->position.x, body->position.y)) {
+    if (!BoxContainsPoint(c_x, c_y, length, position.x, position.y)) {
         return false;
     }
 
     // If a node doesn't contain a body, insert it here.
-    if (qTree->body == NULL) {
-        qTree->body = body;
+    if (qTree->index == -1) {
+        qTree->body_pos = position;
+        qTree->mass = mass;
         qTree->index = index;
         return true;
     }
@@ -92,8 +95,12 @@ bool insertBody(struct Quadtree* qTree, Body* body, int index, int depth) {
         QuadSubDivide(qTree);
         // qTree->body = add(qTree->body, body);
         // Body* old_body = qTree->body;
-        insertBody(qTree, qTree->body, qTree->index, depth);
-        insertBody(qTree, body, index, depth - 1);
+        // insertBody(qTree, qTree->body, qTree->index, depth);
+        // insertBody(qTree, body, index, depth - 1);
+
+        insertBody(qTree, c_x, c_y, length, qTree->body_pos, qTree->mass,
+                   qTree->index, depth);
+        insertBody(qTree, c_x, c_y, length, position, mass, index, depth - 1);
         return true;
     }
 
@@ -102,10 +109,25 @@ bool insertBody(struct Quadtree* qTree, Body* body, int index, int depth) {
     // MemFree(qTree->body);
 
     // Now insert the point into the newly created Childrens.
-    if (insertBody(qTree->nw, body, index, depth - 1)) return true;
-    if (insertBody(qTree->ne, body, index, depth - 1)) return true;
-    if (insertBody(qTree->sw, body, index, depth - 1)) return true;
-    if (insertBody(qTree->se, body, index, depth - 1)) return true;
+    Vector2 subBB = returnSubQuad(length, c_x, c_y, NORTH_WEST);
+    if (insertBody(qTree->nw, subBB.x, subBB.y, length / 2, position, mass,
+                   index, depth - 1))
+        return true;
+
+    subBB = returnSubQuad(length, c_x, c_y, NORTH_EAST);
+    if (insertBody(qTree->ne, subBB.x, subBB.y, length / 2, position, mass,
+                   index, depth - 1))
+        return true;
+
+    subBB = returnSubQuad(length, c_x, c_y, SOUTH_WEST);
+    if (insertBody(qTree->sw, subBB.x, subBB.y, length / 2, position, mass,
+                   index, depth - 1))
+        return true;
+
+    subBB = returnSubQuad(length, c_x, c_y, SOUTH_EAST);
+    if (insertBody(qTree->se, subBB.x, subBB.y, length / 2, position, mass,
+                   index, depth - 1))
+        return true;
 
     return false;
 }
@@ -121,13 +143,13 @@ void deleteTree(struct Quadtree* qTree) {
     }
     return;
 }
-void DebugQuadTree(struct Quadtree* qTree) {
+void DebugQuadTree(struct Quadtree* qTree, float mx, float my, float length) {
     if (qTree) {
-        DrawBoundingBox(qTree->AABB, (Color){2, 88, 13, 255});
-        DebugQuadTree(qTree->nw);
-        DebugQuadTree(qTree->ne);
-        DebugQuadTree(qTree->sw);
-        DebugQuadTree(qTree->se);
+        DrawRectangleLines(mx, my, length, length, (Color){2, 88, 13, 255});
+        DebugQuadTree(qTree->nw, mx, my, length / 2);
+        DebugQuadTree(qTree->ne, mx, my + length / 2, length / 2);
+        DebugQuadTree(qTree->sw, mx + length / 2, my, length / 2);
+        DebugQuadTree(qTree->se, mx + length / 2, my + length / 2, length / 2);
     }
 }
 /*
@@ -135,30 +157,47 @@ void DebugQuadTree(struct Quadtree* qTree) {
     Take qTree->body as A
     body as B
 */
-void updateForce(struct Quadtree* qTree, Body* body, int index) {
+void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
+                 float length) {
     if (qTree) {
         if (qTree->index != index) {
             if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
                 qTree->sw == NULL) {
-                calculate_net_force(body, qTree->body);
+                calculate_net_force(
+                    body, &(Body){.mass = qTree->mass,
+                                  .position = (Vector3){.x = qTree->body_pos.x,
+                                                        .y = qTree->body_pos.y,
+                                                        0.0},
+                                  .acceleration = (Vector3){
+                                      0,
+                                      0,
+                                      0,
+                                  }});
             } else {
-                float ratio =
-                    (BoundingBoxLength(qTree->AABB) /
-                     (eucld_dist(qTree->body->position, body->position)));
+                float sq_l = length / (1 << depth);
+                float eu_l = eucld_dist(
+                    (Vector3){
+                        .x = qTree->body_pos.x, .y = qTree->body_pos.y, 0.0},
+                    body->position);
+
+                float ratio = sq_l / eu_l;
                 if (ratio <= 0.5) {
                     calculate_net_force(
-                        body, &(Body){.mass = qTree->com_mass,
-                                      .position = qTree->centre_of_mass,
-                                      .acceleration = (Vector3){
-                                          0,
-                                          0,
-                                          0,
-                                      }});
+                        body,
+                        &(Body){.mass = qTree->mass,
+                                .position = (Vector3){.x = qTree->body_pos.x,
+                                                      .y = qTree->body_pos.y,
+                                                      0.0},
+                                .acceleration = (Vector3){
+                                    0,
+                                    0,
+                                    0,
+                                }});
                 } else {
-                    updateForce(qTree->nw, body, index);
-                    updateForce(qTree->ne, body, index);
-                    updateForce(qTree->sw, body, index);
-                    updateForce(qTree->se, body, index);
+                    updateForce(qTree->nw, body, index, depth + 1, length);
+                    updateForce(qTree->ne, body, index, depth + 1, length);
+                    updateForce(qTree->sw, body, index, depth + 1, length);
+                    updateForce(qTree->se, body, index, depth + 1, length);
                 }
             }
         }
@@ -167,14 +206,11 @@ void updateForce(struct Quadtree* qTree, Body* body, int index) {
 
 void updateMass(struct Quadtree* qTree) {
     if (qTree) {
-        if (qTree->body == NULL) {
+        if (qTree->index == -1) {
             return;
         }
         if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
             qTree->sw == NULL) {
-            qTree->body = qTree->body;
-            qTree->com_mass = qTree->body->mass;
-            qTree->centre_of_mass = qTree->body->position;
             return;
         }
         // Now for internal Nodes calculcate by it's four children
@@ -189,28 +225,26 @@ void updateMass(struct Quadtree* qTree) {
         // qTree->body = add(qTree->body, qTree->ne->body);
         // qTree->body = add(qTree->body, qTree->sw->body);
         // qTree->body = add(qTree->body, qTree->se->body);
-        qTree->com_mass = qTree->nw->com_mass + qTree->ne->com_mass +
-                          qTree->sw->com_mass + qTree->se->com_mass;
-        qTree->centre_of_mass.x =
-            qTree->nw->centre_of_mass.x * qTree->nw->com_mass +
-            qTree->ne->centre_of_mass.x * qTree->ne->com_mass +
-            qTree->sw->centre_of_mass.x * qTree->sw->com_mass +
-            qTree->se->centre_of_mass.x * qTree->se->com_mass;
+        qTree->mass = qTree->nw->mass + qTree->ne->mass + qTree->sw->mass +
+                      qTree->se->mass;
+        qTree->body_pos.x = qTree->nw->body_pos.x * qTree->nw->mass +
+                            qTree->ne->body_pos.x * qTree->ne->mass +
+                            qTree->sw->body_pos.x * qTree->sw->mass +
+                            qTree->se->body_pos.x * qTree->se->mass;
 
-        qTree->centre_of_mass.x /= qTree->com_mass;
+        qTree->body_pos.x /= qTree->mass;
 
-        qTree->centre_of_mass.y =
-            qTree->nw->centre_of_mass.y * qTree->nw->com_mass +
-            qTree->ne->centre_of_mass.y * qTree->ne->com_mass +
-            qTree->sw->centre_of_mass.y * qTree->sw->com_mass +
-            qTree->se->centre_of_mass.y * qTree->se->com_mass;
+        qTree->body_pos.y = qTree->nw->body_pos.y * qTree->nw->mass +
+                            qTree->ne->body_pos.y * qTree->ne->mass +
+                            qTree->sw->body_pos.y * qTree->sw->mass +
+                            qTree->se->body_pos.y * qTree->se->mass;
 
-        qTree->centre_of_mass.y /= qTree->com_mass;
+        qTree->body_pos.y /= qTree->mass;
     }
 }
 
 int getTreeSize(struct Quadtree* qTree) {
-    if (qTree && qTree->body != NULL) {
+    if (qTree && qTree->index != -1) {
         int sum = getTreeSize(qTree->ne) + getTreeSize(qTree->nw) +
                   getTreeSize(qTree->se) + getTreeSize(qTree->sw);
         return sum;

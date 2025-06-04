@@ -174,7 +174,6 @@ Body* init_colliding_galaxies() {
     };
     body_arr[1].color = WHITE;
 
-
     // For Galaxy 1
     float nominal_mass = 10;
     unsigned int count = 0;
@@ -206,7 +205,6 @@ Body* init_colliding_galaxies() {
         // body_arr[i].velocity.y = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
         // body_arr[i].velocity.z = 0.0;
     }
-
 
     // For Galaxy_2
     nominal_mass = 1;

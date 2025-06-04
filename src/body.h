@@ -3,7 +3,7 @@
 
 #include "raylib.h"
 
-#define MAX_BODIES (1 << 12)
+#define MAX_BODIES (1 << 15)
 
 typedef struct BODY {
     Vector3 position;

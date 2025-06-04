@@ -16,43 +16,36 @@
     |__________|___________|
 
 
-    Each external node represents a single body. Each internal node represents
+   Each external node represents a single body. Each internal node represents
    the group of bodies beneath it, and stores the center-of-mass and the total
-   mass of all its children bodies.
+   mass of all its children bodies if certain ratio > a where a is a threshold.
 */
 
-typedef enum {
-    NORTH_WEST = (1 << 0),
-    NORTH_EAST = (1 << 1),
-    SOUTH_WEST = (1 << 2),
-    SOUTH_EAST = (1 << 3)
-} QuadType;
+typedef enum { NORTH_WEST = 0, NORTH_EAST, SOUTH_WEST, SOUTH_EAST } QuadType;
 
-// typedef struct QUADTREE Quadtree;
+// Keeping only center of bounding box, square magic onwards
 struct Quadtree {
-    BoundingBox AABB;
-    float com_mass;
-    short index;
-    Body* body;
-    Vector3 centre_of_mass;
-    
+    float mass;
+    Vector2 body_pos;
+    int index;
+
     struct Quadtree* nw;
     struct Quadtree* ne;
     struct Quadtree* se;
     struct Quadtree* sw;
 };
 
-bool BoxContainsPoint(BoundingBox, float, float);
-float BoundingBoxLength(BoundingBox);
-BoundingBox returnSubQuad(BoundingBox, QuadType);
+bool BoxContainsPoint(float, float, float, float, float);
+Vector2 returnSubQuad(float, float, float, QuadType);
 // bool checkBodyInQuad(BoundingBox ,QuadType);
-struct Quadtree * createTree(BoundingBox );
-bool insertBody(struct Quadtree*, Body*,int,int depth);
-void QuadSubDivide(struct Quadtree* );
+struct Quadtree* createTree();
+bool insertBody(struct Quadtree*, float, float, float, Vector2, float, int,
+                int depth);
+void QuadSubDivide(struct Quadtree*);
 void deleteTree(struct Quadtree*);
-void updateForce(struct Quadtree*,Body*,int);
+void updateForce(struct Quadtree*, Body*, int, int, float);
 void updateMass(struct Quadtree*);
-void DebugQuadTree(struct Quadtree*);
+void DebugQuadTree(struct Quadtree*, float, float,float );
 int getTreeSize(struct Quadtree*);
 
 #endif /* tree.h */
