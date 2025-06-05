@@ -21,12 +21,19 @@
    mass of all its children bodies if certain ratio > a where a is a threshold.
 */
 
-typedef enum { NORTH_WEST = 0, NORTH_EAST, SOUTH_WEST, SOUTH_EAST } QuadType;
+typedef enum {
+    NORTH_WEST = (1 << 0),
+    NORTH_EAST = (1 << 1),
+    SOUTH_WEST = (1 << 2),
+    SOUTH_EAST = (1 << 3)
+} QuadType;
 
 // Keeping only center of bounding box, square magic onwards
 struct Quadtree {
     float mass;
     Vector2 body_pos;
+    // indexes into the body_arr, -1 if no body present in a node, -2 if its an
+    // internal node
     int index;
 
     struct Quadtree* nw;
@@ -45,7 +52,7 @@ void QuadSubDivide(struct Quadtree*);
 void deleteTree(struct Quadtree*);
 void updateForce(struct Quadtree*, Body*, int, int, float);
 void updateMass(struct Quadtree*);
-void DebugQuadTree(struct Quadtree*, float, float,float );
+void DebugQuadTree(struct Quadtree*, float, float, float, char);
 int getTreeSize(struct Quadtree*);
 
 #endif /* tree.h */

@@ -28,18 +28,18 @@ void update_bodies(Body* body_arr, struct Quadtree* qTree) {
     for (size_t i = 0; i < MAX_BODIES; i++) {
         insertBody(
             qTree, (bb_l.x + bb_r.x) / 2.0, (bb_l.y + bb_r.y) / 2.0,
-            fabs(bb_l.x - bb_r.x),
+            fabsf(bb_l.x - bb_r.x),
             (Vector2){.x = body_arr[i].position.x, body_arr[i].position.y},
-            body_arr[i].mass, i, 50);
+            body_arr[i].mass, i, 128);
     }
     updateMass(qTree);
 
-    // for (size_t i = 0; i < MAX_BODIES; i++) {
-    //     body_arr[i].prev_accel = body_arr[i].acceleration;
-    //     body_arr[i].acceleration = (Vector3){0, 0, 0};
-    //     updateForce(qTree, &body_arr[i], i, 0, fabsf(bb_l.x - bb_r.x));
-    // }
-    //compute_body_force(body_arr);
+    for (size_t i = 0; i < MAX_BODIES; i++) {
+        body_arr[i].prev_accel = body_arr[i].acceleration;
+        body_arr[i].acceleration = (Vector3){0, 0, 0};
+        updateForce(qTree, &body_arr[i], i, 0, fabsf(bb_l.x - bb_r.x));
+    }
+    // compute_body_force(body_arr);
 
     for (size_t i = 0; i < MAX_BODIES; i++) {
         update_body_velocity(&body_arr[i]);
@@ -62,7 +62,7 @@ int main() {
 
     // Body* body_arr = load_values_from_file("../src/planet.dat");
     // Body* body_arr = body_init();
-    // Body* body_arr = init_cluster_bodies();
+    //Body* body_arr = init_cluster_bodies();
     Body* body_arr = init_colliding_galaxies();
     if (body_arr == NULL) {
         return -1;
@@ -88,21 +88,16 @@ int main() {
 
         camera.zoom += ((float)GetMouseWheelMove() * 0.05f);
 
-        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
-        if (camera.zoom < 0.1f) camera.zoom = 0.1f;
+        // if (camera.zoom > 3.0f) camera.zoom = 3.0f;
+        // if (camera.zoom < 0.1f) camera.zoom = 0.1f;
 
         BeginDrawing();
         ClearBackground(BLACK);
         BeginMode2D(camera);
 
-        /*
-            int treeSize = getTreeSize(qTree);
-
-
-
-        */
-        char str[64];
-        sprintf(str, "FPS: %d", GetFPS());
+        int treeSize = getTreeSize(qTree);
+        char str[128];
+        sprintf(str, "FPS: %d\n\n\n\n\n\n\nNodes: %d", GetFPS(),treeSize);
         Vector2 sizePos = GetScreenToWorld2D((Vector2){0, 0}, camera);
         DrawText(str, sizePos.x, sizePos.y, 40 + 11 * (1 / camera.zoom), GREEN);
 
@@ -117,7 +112,7 @@ int main() {
                 (i == 0 || i == 1) ? 50 : 5, body_arr[i].color);
         }
         if (show_tree) {
-            DebugQuadTree(qTree, -10000, -10000, fabsf(bb_l.x - bb_r.x));
+            DebugQuadTree(qTree, -10000, -10000, fabsf(bb_l.x - bb_r.x), '0');
         }
         EndMode2D();
         EndDrawing();

@@ -1,44 +1,60 @@
 #include "tree.h"
 
-#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "raylib.h"
 #include "vector.h"
 
+// long long lookUpTable[128] = {};
+
+Color DebugRectColor[4] = {(Color){2, 88, 13, 255}, (Color){13, 52, 206, 255},
+                           (Color){232, 0, 47, 255}, (Color){255, 116, 0, 255}};
+
 bool BoxContainsPoint(float cx, float cy, float length, float x, float y) {
-    float lx = cx - length / 2.0;
-    float ly = cy - length / 2.0;
-    float bx = cx + length / 2.0;
-    float by = cy + length / 2.0;
+    const float h_l = length / 2.0;
+    float lx = (cx - h_l);
+    float ly = (cy - h_l);
+    float bx = (cx + h_l);
+    float by = (cy + h_l);
 
-    if (x >= lx && y >= ly && x <= bx && y <= by) return true;
-
+    if (x >= lx && x <= bx && y >= ly && y <= by) return true;
     return false;
 }
 
 Vector2 returnSubQuad(float length, float cx, float cy, QuadType quadT) {
+    const float h_l = length / 2.0;
     Vector2 subBB;
     float nx, ny;
     if (quadT & NORTH_WEST) {
-        nx = cx - length / 2.0;
-        ny = cy - length / 2.0;
+        nx = (cx - h_l);
+        ny = (cy - h_l);
+        subBB.x = (cx + nx) / 2.0;
+        subBB.y = (cy + ny) / 2.0;
+        return subBB;
     }
     if (quadT & NORTH_EAST) {
-        nx = cx - length / 2.0;
-        ny = cy + length / 2.0;
+        nx = (cx + h_l);
+        ny = (cy - h_l);
+        subBB.x = (cx + nx) / 2.0;
+        subBB.y = (cy + ny) / 2.0;
+        return subBB;
     }
     if (quadT & SOUTH_WEST) {
-        nx = cx + length / 2.0;
-        ny = cy - length / 2.0;
+        nx = (cx - h_l);
+        ny = (cy + h_l);
+        subBB.x = (cx + nx) / 2.0;
+        subBB.y = (cy + ny) / 2.0;
+        return subBB;
     }
     if (quadT & SOUTH_EAST) {
-        nx = cx + length / 2.0;
-        ny = cy + length / 2.0;
+        nx = (cx + h_l);
+        ny = (cy + h_l);
+        subBB.x = (cx + nx) / 2.0;
+        subBB.y = (cy + ny) / 2.0;
+        return subBB;
     }
-    subBB.x = (cx + nx) / 2.0;
-    subBB.y = (cy + ny) / 2.0;
-    return subBB;
 }
 
 struct Quadtree* createTree() {
@@ -59,6 +75,11 @@ void QuadSubDivide(struct Quadtree* qTree) {
     qTree->ne = createTree();
     qTree->sw = createTree();
     qTree->se = createTree();
+
+    if (qTree->nw == NULL || qTree->ne == NULL || qTree->se == NULL ||
+        qTree->sw == NULL) {
+        exit(-1);
+    }
 
     // qTree->nw->AABB = returnSubQuad(qTree->AABB, NORTH_WEST);
     // qTree->ne->AABB = returnSubQuad(qTree->AABB, NORTH_EAST);
@@ -109,26 +130,26 @@ bool insertBody(struct Quadtree* qTree, float c_x, float c_y, float length,
     // MemFree(qTree->body);
 
     // Now insert the point into the newly created Childrens.
-    Vector2 subBB = returnSubQuad(length, c_x, c_y, NORTH_WEST);
-    if (insertBody(qTree->nw, subBB.x, subBB.y, length / 2, position, mass,
+    Vector2 subBB;
+    subBB = returnSubQuad(length, c_x, c_y, NORTH_WEST);
+    if (insertBody(qTree->nw, subBB.x, subBB.y, length / 2.0, position, mass,
                    index, depth - 1))
         return true;
 
     subBB = returnSubQuad(length, c_x, c_y, NORTH_EAST);
-    if (insertBody(qTree->ne, subBB.x, subBB.y, length / 2, position, mass,
+    if (insertBody(qTree->ne, subBB.x, subBB.y, length / 2.0, position, mass,
                    index, depth - 1))
         return true;
 
     subBB = returnSubQuad(length, c_x, c_y, SOUTH_WEST);
-    if (insertBody(qTree->sw, subBB.x, subBB.y, length / 2, position, mass,
+    if (insertBody(qTree->sw, subBB.x, subBB.y, length / 2.0, position, mass,
                    index, depth - 1))
         return true;
 
     subBB = returnSubQuad(length, c_x, c_y, SOUTH_EAST);
-    if (insertBody(qTree->se, subBB.x, subBB.y, length / 2, position, mass,
+    if (insertBody(qTree->se, subBB.x, subBB.y, length / 2.0, position, mass,
                    index, depth - 1))
         return true;
-
     return false;
 }
 
@@ -143,13 +164,16 @@ void deleteTree(struct Quadtree* qTree) {
     }
     return;
 }
-void DebugQuadTree(struct Quadtree* qTree, float mx, float my, float length) {
-    if (qTree) {
-        DrawRectangleLines(mx, my, length, length, (Color){2, 88, 13, 255});
-        DebugQuadTree(qTree->nw, mx, my, length / 2);
-        DebugQuadTree(qTree->ne, mx, my + length / 2, length / 2);
-        DebugQuadTree(qTree->sw, mx + length / 2, my, length / 2);
-        DebugQuadTree(qTree->se, mx + length / 2, my + length / 2, length / 2);
+void DebugQuadTree(struct Quadtree* qTree, float mx, float my, float length,
+                   char index) {
+    if (qTree && qTree->index != -1) {
+        float h_l = length / 2.0;
+        DrawRectangleLinesEx((Rectangle){mx, my, length, length}, 8,
+                             DebugRectColor[index - '0']);
+        DebugQuadTree(qTree->nw, mx, my, h_l, '0');
+        DebugQuadTree(qTree->ne, mx + h_l, my, h_l, '0');
+        DebugQuadTree(qTree->sw, mx, my + h_l, h_l, '0');
+        DebugQuadTree(qTree->se, mx + h_l, my + h_l, h_l, '0');
     }
 }
 /*
@@ -159,7 +183,7 @@ void DebugQuadTree(struct Quadtree* qTree, float mx, float my, float length) {
 */
 void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
                  float length) {
-    if (qTree) {
+    if (qTree && qTree->index != -1) {
         if (qTree->index != index) {
             if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
                 qTree->sw == NULL) {
@@ -167,7 +191,7 @@ void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
                     body, &(Body){.mass = qTree->mass,
                                   .position = (Vector3){.x = qTree->body_pos.x,
                                                         .y = qTree->body_pos.y,
-                                                        0.0},
+                                                        .z = 0.0},
                                   .acceleration = (Vector3){
                                       0,
                                       0,
@@ -187,7 +211,7 @@ void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
                         &(Body){.mass = qTree->mass,
                                 .position = (Vector3){.x = qTree->body_pos.x,
                                                       .y = qTree->body_pos.y,
-                                                      0.0},
+                                                      .z = 0.0},
                                 .acceleration = (Vector3){
                                     0,
                                     0,
@@ -205,10 +229,7 @@ void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
 }
 
 void updateMass(struct Quadtree* qTree) {
-    if (qTree) {
-        if (qTree->index == -1) {
-            return;
-        }
+    if (qTree && qTree->index != -1) {
         if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
             qTree->sw == NULL) {
             return;

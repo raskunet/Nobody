@@ -154,7 +154,7 @@ Body* init_colliding_galaxies() {
     Body* body_arr = (Body*)MemAlloc(MAX_BODIES * sizeof(Body));
     // set origin
     Vector3 black_hole_1 = {0, 0, 0};
-    Vector3 black_hole_2 = {-2000, 1000, 0};
+    Vector3 black_hole_2 = {-5000, 1000, 0};
 
     body_arr[0].mass = 9e9;
     body_arr[0].position = black_hole_1;

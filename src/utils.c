@@ -1,7 +1,7 @@
 #include "raylib.h"
 
 static double G_CONST = 0.001;
-static double dt = 0.25; 
+static double dt = 0.005; 
 static double t_end = 365 * 10;
 static double t = 0;
 
