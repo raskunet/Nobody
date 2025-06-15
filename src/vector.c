@@ -1,7 +1,7 @@
 #include "vector.h"
 #include <math.h>
 #include <stdlib.h>
-#include "utils.c"
+#include "utils.h"
 
 Vector3 add_vector(Vector3 a, Vector3 b) {
     Vector3 add = {a.x + b.x, a.y + b.y, a.z + b.z};
@@ -33,8 +33,8 @@ Vector3 rand_vec() {
     return rand_v;
 }
 
-double eucld_dist(Vector3 a, Vector3 b) {
+float eucld_dist(Vector3 a, Vector3 b) {
     Vector3 sub = subtract_vector(a, b);
-    double eucl_dist_r = sqrt(sqr(sub.x) + sqr(sub.y) + sqr(sub.z));
+    float eucl_dist_r = sqrtf(sqr(sub.x) + sqr(sub.y) + sqr(sub.z));
     return eucl_dist_r;
 }

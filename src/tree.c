@@ -121,8 +121,8 @@ bool insertBody(struct Quadtree* qTree, float c_x, float c_y, float length,
 
         insertBody(qTree, c_x, c_y, length, qTree->body_pos, qTree->mass,
                    qTree->index, depth);
-        insertBody(qTree, c_x, c_y, length, position, mass, index, depth - 1);
-        return true;
+        return insertBody(qTree, c_x, c_y, length, position, mass, index, depth - 1);
+        //return true;
     }
 
     // Update the Internal Node Centre of mass and total mass
@@ -183,8 +183,7 @@ void DebugQuadTree(struct Quadtree* qTree, float mx, float my, float length,
 */
 void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
                  float length) {
-    if (qTree && qTree->index != -1) {
-        if (qTree->index != index) {
+    if (qTree && qTree->index != -1 && qTree->index != index) {
             if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
                 qTree->sw == NULL) {
                 calculate_net_force(
@@ -224,7 +223,6 @@ void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
                     updateForce(qTree->se, body, index, depth + 1, length);
                 }
             }
-        }
     }
 }
 

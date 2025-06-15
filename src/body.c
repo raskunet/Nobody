@@ -7,8 +7,8 @@
 #include <time.h>
 
 #include "raylib.h"
-#include "utils.c"
 #include "vector.h"
+#include "globals.h"
 
 Body rand_body() {
     Body rand_b;

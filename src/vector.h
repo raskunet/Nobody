@@ -1,4 +1,3 @@
-
 #ifndef VECTOR_H
 #define VECTOR_H
 
@@ -16,6 +15,6 @@ double mag_vector(Vector3 vec);
 
 Vector3 rand_vec();
 
-double eucld_dist(Vector3 a, Vector3 b);
+float eucld_dist(Vector3 a, Vector3 b);
 
 #endif /* vector.h */

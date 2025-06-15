@@ -1,4 +1,5 @@
 #include <math.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -6,7 +7,8 @@
 #include "body.h"
 #include "raylib.h"
 #include "tree.h"
-#include "utils.c"
+#include "config_parser.h"
+#include "globals.h"
 
 #define WIN_HEIGHT 1600
 #define WIN_WIDTH 800
@@ -30,7 +32,7 @@ void update_bodies(Body* body_arr, struct Quadtree* qTree) {
             qTree, (bb_l.x + bb_r.x) / 2.0, (bb_l.y + bb_r.y) / 2.0,
             fabsf(bb_l.x - bb_r.x),
             (Vector2){.x = body_arr[i].position.x, body_arr[i].position.y},
-            body_arr[i].mass, i, 128);
+            body_arr[i].mass, i, 30);
     }
     updateMass(qTree);
 
@@ -47,6 +49,9 @@ void update_bodies(Body* body_arr, struct Quadtree* qTree) {
 }
 
 int main() {
+    readConfig("../src/config.nd");
+
+
     SetRandomSeed(time(NULL));
     InitWindow(WIN_HEIGHT, WIN_WIDTH, "N Body Simulation");
     SetTargetFPS(60);
@@ -62,7 +67,7 @@ int main() {
 
     // Body* body_arr = load_values_from_file("../src/planet.dat");
     // Body* body_arr = body_init();
-    //Body* body_arr = init_cluster_bodies();
+    // Body* body_arr = init_cluster_bodies();
     Body* body_arr = init_colliding_galaxies();
     if (body_arr == NULL) {
         return -1;
@@ -88,8 +93,8 @@ int main() {
 
         camera.zoom += ((float)GetMouseWheelMove() * 0.05f);
 
-        // if (camera.zoom > 3.0f) camera.zoom = 3.0f;
-        // if (camera.zoom < 0.1f) camera.zoom = 0.1f;
+        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
+        if (camera.zoom < 0.1f) camera.zoom = 0.1f;
 
         BeginDrawing();
         ClearBackground(BLACK);
@@ -97,19 +102,14 @@ int main() {
 
         int treeSize = getTreeSize(qTree);
         char str[128];
-        sprintf(str, "FPS: %d\n\n\n\n\n\n\nNodes: %d", GetFPS(),treeSize);
+        sprintf(str, "FPS: %d\n\n\n\n\n\n\nNodes: %d", GetFPS(), treeSize);
         Vector2 sizePos = GetScreenToWorld2D((Vector2){0, 0}, camera);
         DrawText(str, sizePos.x, sizePos.y, 40 + 11 * (1 / camera.zoom), GREEN);
 
         for (size_t i = 0; i < MAX_BODIES; i++) {
-            // Vector2 mapCorrd = map_cartesian_screen((Vector2){
-            //     .x = body_arr[i].position.x, .y = body_arr[i].position.y});
-            // DrawCircleV(mapCorrd, i == 0 ? 50 : 1, body_arr[i].shape.color);
-
-            // Small hack when simulating two galaxies :)
             DrawCircleV(
-                (Vector2){body_arr[i].position.x, body_arr[i].position.y},
-                (i == 0 || i == 1) ? 50 : 5, body_arr[i].color);
+                (Vector2){body_arr[i].position.x, body_arr[i].position.y}, 5,
+                body_arr[i].color);
         }
         if (show_tree) {
             DebugQuadTree(qTree, -10000, -10000, fabsf(bb_l.x - bb_r.x), '0');
