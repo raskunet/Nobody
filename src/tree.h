@@ -54,5 +54,6 @@ void updateForce(struct Quadtree*, Body*, int, int, float);
 void updateMass(struct Quadtree*);
 void DebugQuadTree(struct Quadtree*, float, float, float, char);
 int getTreeSize(struct Quadtree*);
+void cleanTree(struct Quadtree*);
 
 #endif /* tree.h */

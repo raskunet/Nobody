@@ -34,6 +34,7 @@ void update_bodies(Body* body_arr, struct Quadtree* qTree) {
             (Vector2){.x = body_arr[i].position.x, body_arr[i].position.y},
             body_arr[i].mass, i, 30);
     }
+    cleanTree(qTree);
     updateMass(qTree);
 
     for (size_t i = 0; i < MAX_BODIES; i++) {

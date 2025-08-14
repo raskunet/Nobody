@@ -121,8 +121,9 @@ bool insertBody(struct Quadtree* qTree, float c_x, float c_y, float length,
 
         insertBody(qTree, c_x, c_y, length, qTree->body_pos, qTree->mass,
                    qTree->index, depth);
-        return insertBody(qTree, c_x, c_y, length, position, mass, index, depth - 1);
-        //return true;
+        return insertBody(qTree, c_x, c_y, length, position, mass, index,
+                          depth - 1);
+        // return true;
     }
 
     // Update the Internal Node Centre of mass and total mass
@@ -166,7 +167,7 @@ void deleteTree(struct Quadtree* qTree) {
 }
 void DebugQuadTree(struct Quadtree* qTree, float mx, float my, float length,
                    char index) {
-    if (qTree && qTree->index != -1) {
+    if (qTree) {
         float h_l = length / 2.0;
         DrawRectangleLinesEx((Rectangle){mx, my, length, length}, 8,
                              DebugRectColor[index - '0']);
@@ -184,8 +185,26 @@ void DebugQuadTree(struct Quadtree* qTree, float mx, float my, float length,
 void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
                  float length) {
     if (qTree && qTree->index != -1 && qTree->index != index) {
-            if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
-                qTree->sw == NULL) {
+        if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
+            qTree->sw == NULL) {
+            calculate_net_force(
+                body, &(Body){.mass = qTree->mass,
+                              .position = (Vector3){.x = qTree->body_pos.x,
+                                                    .y = qTree->body_pos.y,
+                                                    .z = 0.0},
+                              .acceleration = (Vector3){
+                                  0,
+                                  0,
+                                  0,
+                              }});
+        } else {
+            float sq_l = length / (1 << depth);
+            float eu_l = eucld_dist(
+                (Vector3){.x = qTree->body_pos.x, .y = qTree->body_pos.y, 0.0},
+                body->position);
+
+            float ratio = sq_l / eu_l;
+            if (ratio <= 0.5) {
                 calculate_net_force(
                     body, &(Body){.mass = qTree->mass,
                                   .position = (Vector3){.x = qTree->body_pos.x,
@@ -197,32 +216,12 @@ void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
                                       0,
                                   }});
             } else {
-                float sq_l = length / (1 << depth);
-                float eu_l = eucld_dist(
-                    (Vector3){
-                        .x = qTree->body_pos.x, .y = qTree->body_pos.y, 0.0},
-                    body->position);
-
-                float ratio = sq_l / eu_l;
-                if (ratio <= 0.5) {
-                    calculate_net_force(
-                        body,
-                        &(Body){.mass = qTree->mass,
-                                .position = (Vector3){.x = qTree->body_pos.x,
-                                                      .y = qTree->body_pos.y,
-                                                      .z = 0.0},
-                                .acceleration = (Vector3){
-                                    0,
-                                    0,
-                                    0,
-                                }});
-                } else {
-                    updateForce(qTree->nw, body, index, depth + 1, length);
-                    updateForce(qTree->ne, body, index, depth + 1, length);
-                    updateForce(qTree->sw, body, index, depth + 1, length);
-                    updateForce(qTree->se, body, index, depth + 1, length);
-                }
+                updateForce(qTree->nw, body, index, depth + 1, length);
+                updateForce(qTree->ne, body, index, depth + 1, length);
+                updateForce(qTree->sw, body, index, depth + 1, length);
+                updateForce(qTree->se, body, index, depth + 1, length);
             }
+        }
     }
 }
 
@@ -263,10 +262,23 @@ void updateMass(struct Quadtree* qTree) {
 }
 
 int getTreeSize(struct Quadtree* qTree) {
-    if (qTree && qTree->index != -1) {
+    if (qTree) {
         int sum = getTreeSize(qTree->ne) + getTreeSize(qTree->nw) +
-                  getTreeSize(qTree->se) + getTreeSize(qTree->sw);
+                  getTreeSize(qTree->se) + getTreeSize(qTree->sw) + 1;
         return sum;
     }
-    return 1;
+    return 0;
+}
+
+void cleanTree(struct Quadtree* qTree) {
+    if (qTree && qTree->index == -1) {
+        if (qTree->index == -1) {
+            MemFree(qTree);
+            return;
+        }
+        cleanTree(qTree->nw);
+        cleanTree(qTree->ne);
+        cleanTree(qTree->sw);
+        cleanTree(qTree->se);
+    }
 }
