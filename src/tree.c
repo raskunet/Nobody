@@ -187,33 +187,34 @@ void updateForce(struct Quadtree* qTree, Body* body, int index, int depth,
     if (qTree && qTree->index != -1 && qTree->index != index) {
         if (qTree->nw == NULL && qTree->ne == NULL && qTree->se == NULL &&
             qTree->sw == NULL) {
-            calculate_net_force(
-                body, &(Body){.mass = qTree->mass,
-                              .position = (Vector3){.x = qTree->body_pos.x,
-                                                    .y = qTree->body_pos.y,
-                                                    .z = 0.0},
-                              .acceleration = (Vector3){
-                                  0,
-                                  0,
-                                  0,
-                              }});
+            calculate_net_force(body, &(Body){.mass = qTree->mass,
+                                              .position =
+                                                  (Vector2){
+                                                      .x = qTree->body_pos.x,
+                                                      .y = qTree->body_pos.y,
+                                                  },
+                                              .acceleration = (Vector2){
+                                                  0,
+                                                  0,
+
+                                              }});
         } else {
             float sq_l = length / (1 << depth);
             float eu_l = eucld_dist(
-                (Vector3){.x = qTree->body_pos.x, .y = qTree->body_pos.y, 0.0},
+                (Vector2){.x = qTree->body_pos.x, .y = qTree->body_pos.y},
                 body->position);
 
             float ratio = sq_l / eu_l;
             if (ratio <= 0.5) {
                 calculate_net_force(
                     body, &(Body){.mass = qTree->mass,
-                                  .position = (Vector3){.x = qTree->body_pos.x,
+                                  .position = (Vector2){.x = qTree->body_pos.x,
                                                         .y = qTree->body_pos.y,
-                                                        .z = 0.0},
-                                  .acceleration = (Vector3){
+                                                        },
+                                  .acceleration = (Vector2){
                                       0,
                                       0,
-                                      0,
+                                      
                                   }});
             } else {
                 updateForce(qTree->nw, body, index, depth + 1, length);

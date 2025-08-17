@@ -4,10 +4,10 @@
 #include "raylib.h"
 
 typedef struct BODY {
-    Vector3 position;
-    Vector3 velocity;
-    Vector3 acceleration;
-    Vector3 prev_accel;
+    Vector2 position;
+    Vector2 velocity;
+    Vector2 acceleration;
+    Vector2 prev_accel;
     double mass;
     Color color;
 } Body;

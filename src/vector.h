@@ -3,18 +3,18 @@
 
 #include "raylib.h"
 
-Vector3 add_vector(Vector3 a, Vector3 b);
+Vector2 add_vector(Vector2 a, Vector2 b);
 
-Vector3 subtract_vector(Vector3 a, Vector3 b);
+Vector2 subtract_vector(Vector2 a, Vector2 b);
 
-Vector3 scale_vector(double scale, Vector3 a);
+Vector2 scale_vector(double scale, Vector2 a);
 
-Vector3 div_vector(double div, Vector3 a);
+Vector2 div_vector(double div, Vector2 a);
 
-double mag_vector(Vector3 vec);
+double mag_vector(Vector2 vec);
 
-Vector3 rand_vec();
+Vector2 rand_vec();
 
-float eucld_dist(Vector3 a, Vector3 b);
+float eucld_dist(Vector2 a, Vector2 b);
 
 #endif /* vector.h */

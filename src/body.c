@@ -6,9 +6,9 @@
 #include <string.h>
 #include <time.h>
 
+#include "globals.h"
 #include "raylib.h"
 #include "vector.h"
-#include "globals.h"
 
 Body rand_body() {
     Body rand_b;
@@ -16,7 +16,7 @@ Body rand_body() {
     rand_b.velocity = rand_vec();
     rand_b.mass = (float)rand() / RAND_MAX + 0.3;
     rand_b.color = WHITE;
-    rand_b.prev_accel = (Vector3){0.0f, 0.0f, 0.0f};
+    rand_b.prev_accel = (Vector2){0.0f, 0.0f};
     return rand_b;
 }
 
@@ -43,14 +43,12 @@ Body* load_values_from_file(char* filename) {
         if (*count == 7) {
             body[i].position.x = strtod(line[0], NULL);
             body[i].position.y = strtod(line[1], NULL);
-            body[i].position.z = strtod(line[2], NULL);
 
             body[i].velocity.x = strtod(line[3], NULL);
             body[i].velocity.y = strtod(line[4], NULL);
-            body[i].velocity.z = strtod(line[5], NULL);
 
-            body[i].acceleration = (Vector3){0, 0, 0};
-            body[i].prev_accel = (Vector3){0, 0, 0};
+            body[i].acceleration = (Vector2){0, 0};
+            body[i].prev_accel = (Vector2){0, 0};
 
             body[i].mass = strtod(line[6], NULL);
             body[i].color = YELLOW;
@@ -73,7 +71,7 @@ Body* body_init() {
         body_arr[i] = rand_body();
     }
 
-    Vector3 v_sum = {0}, p_sum = {0};
+    Vector2 v_sum = {0}, p_sum = {0};
     double mass_sum = 0;
     for (size_t i = 0; i < MAX_BODIES; i++) {
         v_sum = add_vector(v_sum, body_arr[i].velocity);
@@ -81,7 +79,7 @@ Body* body_init() {
         mass_sum += body_arr[i].mass;
     }
 
-    Vector3 v_avg = div_vector(mass_sum, v_sum),
+    Vector2 v_avg = div_vector(mass_sum, v_sum),
             p_avg = div_vector(mass_sum, p_sum);
 
     for (size_t i = 0; i < MAX_BODIES; i++) {
@@ -110,9 +108,8 @@ Body* init_cluster_bodies() {
     Body* body_arr = (Body*)MemAlloc(MAX_BODIES * sizeof(Body));
     // set origin
     body_arr[0].mass = 1e10;
-    body_arr[0].position = (Vector3){0, 0, 0};
-    body_arr[0].velocity = (Vector3){
-        0,
+    body_arr[0].position = (Vector2){0, 0};
+    body_arr[0].velocity = (Vector2){
         0,
         0,
     };
@@ -131,7 +128,6 @@ Body* init_cluster_bodies() {
 
         body_arr[i].position.x = cos(theta) * r;
         body_arr[i].position.y = sin(theta) * r;
-        body_arr[i].position.z = 0.0;
 
         r = sqrtf(G_CONST * total_mass / r) * (rand() / (double)RAND_MAX + 3) /
             4;
@@ -139,7 +135,6 @@ Body* init_cluster_bodies() {
 
         body_arr[i].velocity.x = cos(theta) * r;
         body_arr[i].velocity.y = sin(theta) * r;
-        body_arr[i].velocity.z = 0.0;
 
         //(rand() / (float)RAND_MAX - 0.5) * 10000.0;)
         // body_arr[i].velocity.x = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
@@ -153,12 +148,12 @@ Body* init_colliding_galaxies() {
     srand(time(NULL));
     Body* body_arr = (Body*)MemAlloc(MAX_BODIES * sizeof(Body));
     // set origin
-    Vector3 black_hole_1 = {0, 0, 0};
-    Vector3 black_hole_2 = {-5000, 1000, 0};
+    Vector2 black_hole_1 = {0, 0};
+    Vector2 black_hole_2 = {-5000, 1000};
 
     body_arr[0].mass = 9e9;
     body_arr[0].position = black_hole_1;
-    body_arr[0].velocity = (Vector3){
+    body_arr[0].velocity = (Vector2){
         -1,
         0,
         0,
@@ -167,10 +162,9 @@ Body* init_colliding_galaxies() {
 
     body_arr[1].mass = 5e9;
     body_arr[1].position = black_hole_2;
-    body_arr[1].velocity = (Vector3){
+    body_arr[1].velocity = (Vector2){
         10,
         -60,
-        0,
     };
     body_arr[1].color = WHITE;
 
@@ -190,7 +184,6 @@ Body* init_colliding_galaxies() {
 
         body_arr[i].position.x = cos(theta) * r + black_hole_1.x;
         body_arr[i].position.y = sin(theta) * r + black_hole_1.y;
-        body_arr[i].position.z = 0.0;
 
         r = sqrtf(G_CONST * total_mass / r) * (rand() / (double)RAND_MAX + 3) /
             4;
@@ -198,7 +191,6 @@ Body* init_colliding_galaxies() {
 
         body_arr[i].velocity.x = cos(theta) * r;
         body_arr[i].velocity.y = sin(theta) * r;
-        body_arr[i].velocity.z = 0.0;
 
         //(rand() / (float)RAND_MAX - 0.5) * 10000.0;)
         // body_arr[i].velocity.x = (rand() / (float)RAND_MAX - 0.5) * 100.0f;
@@ -220,7 +212,6 @@ Body* init_colliding_galaxies() {
 
         body_arr[i].position.x = -cos(theta) * r + black_hole_2.x;
         body_arr[i].position.y = -sin(theta) * r + black_hole_2.y;
-        body_arr[i].position.z = 0.0;
 
         r = sqrtf(G_CONST * total_mass / r) * (rand() / (double)RAND_MAX + 3) /
             4;
@@ -228,14 +219,13 @@ Body* init_colliding_galaxies() {
 
         body_arr[i].velocity.x = cos(theta) * r;
         body_arr[i].velocity.y = sin(theta) * r;
-        body_arr[i].velocity.z = 0.0;
     }
     return body_arr;
 }
 void compute_body_force(Body* body_t) {
     for (size_t i = 0; i < MAX_BODIES; i++) {
         body_t[i].prev_accel = body_t[i].acceleration;
-        body_t[i].acceleration = (Vector3){0, 0, 0};
+        body_t[i].acceleration = (Vector2){0, 0};
 
         for (size_t j = 0; j < MAX_BODIES; j++) {
             if (j != i) {
@@ -249,7 +239,7 @@ void calculate_net_force(Body* A, Body* B) {
     if (!(A == NULL || B == NULL)) {
         double ESP2 = 1.0e-2f;
         double mass = B->mass;
-        Vector3 dist = subtract_vector(B->position, A->position);
+        Vector2 dist = subtract_vector(B->position, A->position);
 
         double mag_r = dist.x * dist.x + dist.y * dist.y + ESP2;
         // if (mag_r > 1000000) {

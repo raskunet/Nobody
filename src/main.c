@@ -39,7 +39,7 @@ void update_bodies(Body* body_arr, struct Quadtree* qTree) {
 
     for (size_t i = 0; i < MAX_BODIES; i++) {
         body_arr[i].prev_accel = body_arr[i].acceleration;
-        body_arr[i].acceleration = (Vector3){0, 0, 0};
+        body_arr[i].acceleration = (Vector2){0, 0};
         updateForce(qTree, &body_arr[i], i, 0, fabsf(bb_l.x - bb_r.x));
     }
     // compute_body_force(body_arr);
